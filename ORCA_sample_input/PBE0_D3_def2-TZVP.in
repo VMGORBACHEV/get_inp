@@ -1,0 +1,15 @@
+
+!RKS PBE0 d3bj def2-TZVP def2/J RIJDX TightSCF defgrid2 NoMOPrint Printbasis Opt
+%pal nprocs 4 end
+%maxcore 1000
+%base "#"
+
+%geom
+TolE=1e-6
+TolMaxG=1e-4
+TolRMSG=3e-5
+TolMaxD=1e-3
+TolRMSD=6e-4
+end
+
+*xyz 1 1

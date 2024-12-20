@@ -11,9 +11,9 @@ def loadfile1():
 
 # Function to load XYZ file
 def loadfile2():
-    global xyzFile
-    xyzFile = filedialog.askopenfilenames(filetypes=(('XYZ files', '*.xyz'), ('All files', '*.*')))
-    textBox.insert(END, '\n'.join(xyzFile))
+    global xyzFiles
+    xyzFiles = filedialog.askopenfilenames(filetypes=(('XYZ files', '*.xyz'), ('All files', '*.*')))
+    textBox.insert(END, '\n'.join(xyzFiles))
     textBox.insert(END, '\n')
 
 # Function to generate ORCA input files
@@ -23,44 +23,48 @@ def genFiles():
     The XYZ coordinates have a '*' added on a new line after all coordinates as required by ORCA.
     """
     try:
-        with open(xyzFile[0]) as source2:
-            imol = 1  # Molecule index
+        ix = 1  # XYZ file index
+        for xyzFile in xyzFiles:
+            with open(xyzFile) as source2:
+                imol = 1  # Molecule index
 
-            while True:
-                try:
-                    atomCount = int(source2.readline().strip())  # Read the number of atoms
-                except ValueError:
-                    return  # End of file or invalid format
+                while True:
+                    try:
+                        atomCount = int(source2.readline().strip())  # Read the number of atoms
+                    except ValueError:
+                        break  # End of file or invalid format
 
-                mol = ''
-                source2.readline()  # Skip comment line
+                    mol = ''
+                    source2.readline()  # Skip comment line
 
-                # Collect all atomic coordinates
-                for _ in range(atomCount):
-                    line = source2.readline().strip()
-                    mol += line + '\n'
+                    # Collect all atomic coordinates
+                    for _ in range(atomCount):
+                        line = source2.readline().strip()
+                        mol += line + '\n'
 
-                mol += '*\n'  # Add the * on a new line after all coordinates
+                    mol += '*\n'  # Add the * on a new line after all coordinates
 
-                # Loop through each configuration file and generate inputs
-                for cf in configFiles:
-                    config_name = os.path.splitext(os.path.basename(cf))[0]
+                    # Loop through each configuration file and generate inputs
+                    for cf in configFiles:
+                        config_name = os.path.splitext(os.path.basename(cf))[0]
 
-                    with open(cf) as source1, open(f'{config_name}_conformer_{imol}.in', 'w') as destination:
-                        # Write header
-                        destination.write(f'# Conformer number {imol}\n')
+                        with open(cf) as source1, open(f'{config_name}_molecule_{ix}_conformer_{imol}.in', 'w') as destination:
+                            # Write header
+                            destination.write(f'# Molecule {ix}; Conformer number {imol} ({config_name})\n')
 
-                        # Process and replace %base
-                        for line in source1:
-                            if line.strip().startswith('%base'):
-                                destination.write(f'%base "{config_name}_{imol}"\n')
-                            else:
-                                destination.write(line)
+                            # Process and replace %base
+                            for line in source1:
+                                if line.strip().startswith('%base'):
+                                    destination.write(f'%base "{config_name}_{ix}_{imol}"\n')
+                                else:
+                                    destination.write(line)
 
-                        # Append molecular coordinates
-                        destination.write(mol)
+                            # Append molecular coordinates
+                            destination.write(mol)
 
-                imol += 1  # Increment molecule index
+                    imol += 1  # Increment molecule index
+
+            ix += 1  # Increment XYZ file index
 
     except Exception as e:
         textBox.insert(END, f'Error: {e}\n')
@@ -72,7 +76,7 @@ def quit():
 # Function to print loaded file paths to the console
 def printFilesList():
     print('\n'.join(configFiles))
-    print('\n'.join(xyzFile))
+    print('\n'.join(xyzFiles))
 
 # Create the main application window
 window = Tk()
